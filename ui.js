@@ -217,12 +217,12 @@ function buildSelector(scene) {
 
   scene.selectorBg.clear();
   scene.selectorBg.fillStyle(0x000000, 0.8);
-  scene.selectorBg.fillRoundedRect(8, H - 66, W - 16, 58, 6);
+  scene.selectorBg.fillRoundedRect(8, H - 88, W - 16, 80, 6);
 
   for (let i = 0; i < allKeys.length; i++) {
     const key = allKeys[i];
     const bx = startX + i * btnWidth;
-    const by = H - 62;
+    const by = H - 84;
 
     const btnGfx = scene.add.graphics().setScrollFactor(0).setDepth(20001);
     ign(btnGfx);
@@ -253,7 +253,7 @@ function buildSelector(scene) {
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(20002);
     ign(costLabel);
 
-    const zone = scene.add.zone(bx, by, btnWidth - 2, 48)
+    const zone = scene.add.zone(bx, by, btnWidth - 2, 70)
       .setOrigin(0, 0).setScrollFactor(0).setDepth(20003).setInteractive();
     ign(zone);
 
@@ -527,11 +527,11 @@ function updateSelectorVisibility(scene) {
       btn.zone.setInteractive();
     }
     scene.selectorToggleText.setText("[-]");
-    scene.selectorToggleText.setPosition(W / 2, H - 72);
-    scene.selectorToggleZone.setPosition(W / 2, H - 72);
+    scene.selectorToggleText.setPosition(W / 2, H - 94);
+    scene.selectorToggleZone.setPosition(W / 2, H - 94);
     scene.selectorToggleBg.clear();
     scene.selectorToggleBg.fillStyle(0x000000, 0.6);
-    scene.selectorToggleBg.fillRoundedRect(W / 2 - 16, H - 79, 32, 14, 3);
+    scene.selectorToggleBg.fillRoundedRect(W / 2 - 16, H - 101, 32, 14, 3);
     updateBuildingSelector(scene);
   }
 }
@@ -546,9 +546,9 @@ export function updateBuildingSelector(scene) {
     const affordable = btn.key === null ? true : canAfford(btn.key);
 
     btn.btnGfx.fillStyle(isSelected ? 0x336633 : 0x222222, isSelected ? 0.9 : 0.8);
-    btn.btnGfx.fillRoundedRect(btn.bx + 1, btn.by + 1, btn.btnWidth - 4, 44, 4);
+    btn.btnGfx.fillRoundedRect(btn.bx + 1, btn.by + 1, btn.btnWidth - 4, 66, 4);
     btn.btnGfx.lineStyle(isSelected ? 2 : 1, isSelected ? 0x00ff00 : 0x444444, 1);
-    btn.btnGfx.strokeRoundedRect(btn.bx + 1, btn.by + 1, btn.btnWidth - 4, 44, 4);
+    btn.btnGfx.strokeRoundedRect(btn.bx + 1, btn.by + 1, btn.btnWidth - 4, 66, 4);
 
     if (btn.key !== null) {
       btn.costLabel.setFill(affordable ? "#aaaaaa" : "#ff4444");
@@ -938,7 +938,6 @@ function hideTutorial(scene) {
   scene.tutorialText.setVisible(false);
   scene.tutorialSkip.setVisible(false);
   scene.tutorialNext.setVisible(false);
-  if (state.gameSpeed === 0) state.gameSpeed = 1;
 }
 
 export function updateTutorial(scene) {
@@ -961,6 +960,9 @@ export function updateTutorial(scene) {
       const next = TUTORIAL_STEPS[state.tutorialStep];
       if (next && next.auto) {
         state.tutorialTimer = next.delay;
+      } else if (next && !next.auto && state.gameSpeed === 0) {
+        // Transitioning from auto step to action step — unpause once
+        state.gameSpeed = 1;
       }
       return;
     }
@@ -969,6 +971,8 @@ export function updateTutorial(scene) {
     const next = TUTORIAL_STEPS[state.tutorialStep];
     if (next && next.auto) {
       state.tutorialTimer = next.delay;
+    } else if (next && !next.auto && state.gameSpeed === 0) {
+      state.gameSpeed = 1;
     }
     return;
   }
@@ -1000,8 +1004,4 @@ export function updateTutorial(scene) {
     scene.tutorialNext.setVisible(false);
   }
 
-  // Unpause once player needs to take action (non-auto step)
-  if (!step.auto && state.gameSpeed === 0) {
-    state.gameSpeed = 1;
-  }
 }

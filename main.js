@@ -171,7 +171,7 @@ class GameScene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    const dt = (delta / 1000) * state.gameSpeed;
+    const dt = state.gameSpeed === 0 ? 0 : delta / 1000;
     for (const s of state.settlers) {
       updateSettler(this, s, dt);
     }
@@ -217,34 +217,32 @@ class GameScene extends Phaser.Scene {
   }
 
   gameTick() {
-    updateTutorial(this);
     if (state.gameSpeed === 0) return; // paused
+    updateTutorial(this);
 
-    for (let tick = 0; tick < state.gameSpeed; tick++) {
-      const prevCompleted = [...state.research.completed];
+    const prevCompleted = [...state.research.completed];
 
-      // Advance day/night
-      state.dayTime += 1 / DAY_LENGTH;
-      if (state.dayTime >= 1) {
-        state.dayTime -= 1;
-        state.dayCount++;
-      }
+    // Day advances at a rate that gives 5 min/day at speed 1, 10 min/day at speed 2
+    state.dayTime += 1 / (DAY_LENGTH * state.gameSpeed);
+    if (state.dayTime >= 1) {
+      state.dayTime -= 1;
+      state.dayCount++;
+    }
 
-      processConstruction(this);
-      autoAssignSettlers();
-      processProduction();
+    processConstruction(this);
+    autoAssignSettlers();
+    processProduction();
 
-      // Storm countdown
-      state.stormTimer--;
-      if (state.stormTimer <= 0) {
-        this.triggerMeteorStorm();
-      }
+    // Storm countdown
+    state.stormTimer--;
+    if (state.stormTimer <= 0) {
+      this.triggerMeteorStorm();
+    }
 
-      // Check if new research completed — rebuild UI
-      if (state.research.completed.length > prevCompleted.length) {
-        rebuildSelector(this);
-        rebuildSidePanel(this);
-      }
+    // Check if new research completed — rebuild UI
+    if (state.research.completed.length > prevCompleted.length) {
+      rebuildSelector(this);
+      rebuildSidePanel(this);
     }
 
     redrawBuildings(this);

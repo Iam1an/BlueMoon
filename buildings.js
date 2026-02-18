@@ -509,6 +509,26 @@ export function processProduction() {
     b.notConnected = !adjacent && !!bt.requiresAdjacency;
   }
 
+  // Fuel check (before power deficit pass): include fuel that active oil drills
+  // will produce this tick so generators don't shut off while drills are running.
+  let pendingFuel = resources.fuel || 0;
+  for (const b of activeBuildings) {
+    if (!b.active) continue;
+    const bt = BUILDING_TYPES[b.type];
+    if (bt && bt.produces.fuel) pendingFuel += bt.produces.fuel;
+  }
+  for (const b of activeBuildings) {
+    if (!b.active) continue;
+    const bt = BUILDING_TYPES[b.type];
+    if (bt && bt.consumes.fuel) {
+      if (pendingFuel >= bt.consumes.fuel) {
+        pendingFuel -= bt.consumes.fuel;
+      } else {
+        b.active = false;
+      }
+    }
+  }
+
   // Solar dimming factor based on time of day
   const solarFactor = Math.max(0.1, Math.sin(state.dayTime * Math.PI));
 
@@ -567,15 +587,6 @@ export function processProduction() {
     }
   }
 
-  // Check fuel for generators
-  for (const b of activeBuildings) {
-    if (!b.active) continue;
-    const bt = BUILDING_TYPES[b.type];
-    if (bt && bt.consumes.fuel && (resources.fuel || 0) < bt.consumes.fuel) {
-      b.active = false;
-    }
-  }
-
   // Recalculate power
   powerProduced = 0;
   powerConsumed = 0;
@@ -631,7 +642,7 @@ export function processProduction() {
     const multiplier = bt.requiresSettlers ? (1 + (Math.max(workerCount, 1) - 1) * 0.33) : 1;
 
     if (bt.consumes.fuel) {
-      resources.fuel -= bt.consumes.fuel;
+      resources.fuel = Math.max(0, (resources.fuel || 0) - bt.consumes.fuel);
     }
 
     for (const [res, amount] of Object.entries(bt.produces)) {

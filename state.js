@@ -20,8 +20,8 @@ export const FOOD_PER_SETTLER = 1;
 export const WATER_PER_SETTLER = 1;
 export const DEPLETION_INTERVAL = 5; // consume O2/food/water every N ticks
 
-export const DAY_LENGTH = 240;            // ticks per day (4 min at 1 tick/sec)
-export const STORM_INTERVAL = 1680;      // 7 days * 240 ticks
+export const DAY_LENGTH = 300;            // ticks per day (5 min at 1x, 10 min at 2x)
+export const STORM_INTERVAL = 2100;      // 7 days * 300 ticks
 export const STORM_WRECKAGE_MIN = 10;
 export const STORM_WRECKAGE_MAX = 15;
 export const SHIELD_RADIUS = 3;          // Manhattan distance
