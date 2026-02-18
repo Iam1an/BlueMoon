@@ -8,6 +8,22 @@ import { canAfford, isBuildingUnlocked, isRecipeUnlocked, isCropUnlocked, demoli
 import { unassignSettler, assignSettlerToBuilding } from "./settlers.js";
 
 // ==============================
+// TUTORIAL STEPS
+// ==============================
+const TUTORIAL_STEPS = [
+  { message: "Welcome to Blue Moon! Your settlers have crash-landed.", auto: true, delay: 180 },
+  { message: "Select a Solar Panel from the build menu at the bottom.", condition: (st) => st.selectedType === "solar" },
+  { message: "Place it on an empty tile near your ship.", condition: (st) => st.buildings.some(b => b.type === "solar" && b.constructing) },
+  { message: "Settlers will automatically build it. Wait for construction.", condition: (st) => st.buildings.some(b => b.type === "solar" && !b.constructing) },
+  { message: "Now build a Mining Drill to gather resources.", condition: (st) => st.selectedType === "miner" },
+  { message: "Place it on an empty tile.", condition: (st) => st.buildings.some(b => b.type === "miner") },
+  { message: "Click a building to see its info. Try clicking your Solar Panel.", condition: (st) => st.selectedBuilding?.type === "solar" },
+  { message: "Use [+WORKER] to manually assign settlers, or let them auto-assign.", auto: true, delay: 300 },
+  { message: "Build a Battery to store power for nighttime.", condition: (st) => st.buildings.some(b => b.type === "battery") },
+  { message: "You're ready! Explore the build menu for more buildings. Good luck!", auto: true, delay: 300 }
+];
+
+// ==============================
 // CREATE UI
 // ==============================
 export function createUI(scene) {
@@ -130,6 +146,50 @@ export function createUI(scene) {
   }
 
   updateInfoPanel(scene);
+
+  // --- Tutorial overlay ---
+  scene.tutorialBg = scene.add.graphics().setScrollFactor(0).setDepth(22000);
+  ign(scene.tutorialBg);
+  scene.tutorialText = scene.add.text(W / 2, 56, "", {
+    fontSize: "14px", fontFamily: "monospace", fill: "#ffffff", align: "center",
+    wordWrap: { width: W - 100 }
+  }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(22001);
+  ign(scene.tutorialText);
+  scene.tutorialSkip = scene.add.text(W - 16, 52, "[Skip Tutorial]", {
+    fontSize: "10px", fontFamily: "monospace", fill: "#888888"
+  }).setOrigin(1, 0).setScrollFactor(0).setDepth(22001).setInteractive();
+  ign(scene.tutorialSkip);
+  scene.tutorialSkip.on("pointerdown", () => {
+    state.tutorialActive = false;
+    hideTutorial(scene);
+  });
+  scene.tutorialSkip.on("pointerover", () => scene.tutorialSkip.setFill("#ffffff"));
+  scene.tutorialSkip.on("pointerout", () => scene.tutorialSkip.setFill("#888888"));
+
+  // Next button
+  scene.tutorialNext = scene.add.text(0, 0, "[Next >>]", {
+    fontSize: "11px", fontFamily: "monospace", fill: "#44aaff"
+  }).setOrigin(1, 0).setScrollFactor(0).setDepth(22001).setInteractive().setVisible(false);
+  ign(scene.tutorialNext);
+  scene.tutorialNext.on("pointerdown", () => {
+    if (!state.tutorialActive) return;
+    state.tutorialStep++;
+    const next = TUTORIAL_STEPS[state.tutorialStep];
+    if (next && next.auto) {
+      state.tutorialTimer = next.delay;
+    }
+  });
+  scene.tutorialNext.on("pointerover", () => scene.tutorialNext.setFill("#ffffff"));
+  scene.tutorialNext.on("pointerout", () => scene.tutorialNext.setFill("#44aaff"));
+
+  // Initialize first tutorial step timer and pause
+  if (state.tutorialActive) {
+    state.gameSpeed = 0;
+    const step = TUTORIAL_STEPS[state.tutorialStep];
+    if (step && step.auto) {
+      state.tutorialTimer = step.delay;
+    }
+  }
 }
 
 // ==============================
@@ -865,5 +925,78 @@ export function updateInfoPanel(scene) {
     z.setSize(185, 14);
     z.setVisible(true);
     z.on("pointerdown", a.cb);
+  }
+}
+
+// ==============================
+// TUTORIAL
+// ==============================
+function hideTutorial(scene) {
+  scene.tutorialBg.clear();
+  scene.tutorialText.setVisible(false);
+  scene.tutorialSkip.setVisible(false);
+  scene.tutorialNext.setVisible(false);
+  if (state.gameSpeed === 0) state.gameSpeed = 1;
+}
+
+export function updateTutorial(scene) {
+  if (!state.tutorialActive) {
+    hideTutorial(scene);
+    return;
+  }
+
+  const step = TUTORIAL_STEPS[state.tutorialStep];
+  if (!step) {
+    state.tutorialActive = false;
+    hideTutorial(scene);
+    return;
+  }
+
+  if (step.auto) {
+    state.tutorialTimer--;
+    if (state.tutorialTimer <= 0) {
+      state.tutorialStep++;
+      const next = TUTORIAL_STEPS[state.tutorialStep];
+      if (next && next.auto) {
+        state.tutorialTimer = next.delay;
+      }
+      return;
+    }
+  } else if (step.condition && step.condition(state)) {
+    state.tutorialStep++;
+    const next = TUTORIAL_STEPS[state.tutorialStep];
+    if (next && next.auto) {
+      state.tutorialTimer = next.delay;
+    }
+    return;
+  }
+
+  // Draw tutorial bar
+  const W = scene.cameras.main.width;
+  const barW = Math.min(W - 40, 600);
+  const barX = (W - barW) / 2;
+
+  scene.tutorialBg.clear();
+  scene.tutorialBg.fillStyle(0x000000, 0.8);
+  scene.tutorialBg.fillRoundedRect(barX, 48, barW, 30, 6);
+  scene.tutorialBg.lineStyle(1, 0x44aaff, 0.6);
+  scene.tutorialBg.strokeRoundedRect(barX, 48, barW, 30, 6);
+
+  scene.tutorialText.setText(step.message);
+  scene.tutorialText.setPosition(W / 2, 53);
+  scene.tutorialText.setVisible(true);
+  scene.tutorialSkip.setVisible(true);
+
+  // Show Next button on auto steps
+  if (step.auto) {
+    scene.tutorialNext.setPosition(barX + barW - 8, 54);
+    scene.tutorialNext.setVisible(true);
+  } else {
+    scene.tutorialNext.setVisible(false);
+  }
+
+  // Unpause once player needs to take action (non-auto step)
+  if (!step.auto && state.gameSpeed === 0) {
+    state.gameSpeed = 1;
   }
 }

@@ -400,5 +400,9 @@ export const state = {
   },
   unlockedBuildings: [],
   unlockedRecipes: [],
-  unlockedCrops: []
+  unlockedCrops: [],
+  // Tutorial
+  tutorialActive: true,
+  tutorialStep: 0,
+  tutorialTimer: 0
 };

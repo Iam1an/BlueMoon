@@ -6,7 +6,65 @@ import {
 } from "./state.js";
 import { canAfford, isBuildingUnlocked, drawIsoBox, placeBuilding, redrawBuildings, processConstruction, processProduction, spawnWreckage, processMeteorStorm } from "./buildings.js";
 import { spawnSettler, updateSettler, assignSettlerToBuilding, findSettlerAt, autoAssignSettlers, tryGrowPopulation } from "./settlers.js";
-import { createUI, updateResourceUI, updateBuildingSelector, updateInfoPanel, rebuildSelector, rebuildSidePanel } from "./ui.js";
+import { createUI, updateResourceUI, updateBuildingSelector, updateInfoPanel, rebuildSelector, rebuildSidePanel, updateTutorial } from "./ui.js";
+
+// ==============================
+// MENU SCENE
+// ==============================
+class MenuScene extends Phaser.Scene {
+  constructor() {
+    super("menu");
+  }
+
+  create() {
+    const W = this.cameras.main.width;
+    const H = this.cameras.main.height;
+
+    this.cameras.main.setBackgroundColor("#2a2a2a");
+
+    this.add.text(W / 2, H / 2 - 80, "BLUE MOON", {
+      fontSize: "48px", fontFamily: "monospace", fill: "#ffffff", fontStyle: "bold"
+    }).setOrigin(0.5, 0.5);
+
+    this.add.text(W / 2, H / 2 - 30, "A Space Colony Game", {
+      fontSize: "16px", fontFamily: "monospace", fill: "#aaaaaa"
+    }).setOrigin(0.5, 0.5);
+
+    // Play button
+    const btnW = 160, btnH = 48;
+    const btnX = W / 2 - btnW / 2;
+    const btnY = H / 2 + 30;
+
+    const btnGfx = this.add.graphics();
+    btnGfx.fillStyle(0x336633, 1);
+    btnGfx.fillRoundedRect(btnX, btnY, btnW, btnH, 8);
+    btnGfx.lineStyle(2, 0x00ff00, 1);
+    btnGfx.strokeRoundedRect(btnX, btnY, btnW, btnH, 8);
+
+    this.add.text(W / 2, btnY + btnH / 2, "PLAY", {
+      fontSize: "24px", fontFamily: "monospace", fill: "#00ff00", fontStyle: "bold"
+    }).setOrigin(0.5, 0.5);
+
+    const btnZone = this.add.zone(btnX, btnY, btnW, btnH).setOrigin(0, 0).setInteractive();
+    btnZone.on("pointerdown", () => {
+      this.scene.start("game");
+    });
+    btnZone.on("pointerover", () => {
+      btnGfx.clear();
+      btnGfx.fillStyle(0x448844, 1);
+      btnGfx.fillRoundedRect(btnX, btnY, btnW, btnH, 8);
+      btnGfx.lineStyle(2, 0x44ff44, 1);
+      btnGfx.strokeRoundedRect(btnX, btnY, btnW, btnH, 8);
+    });
+    btnZone.on("pointerout", () => {
+      btnGfx.clear();
+      btnGfx.fillStyle(0x336633, 1);
+      btnGfx.fillRoundedRect(btnX, btnY, btnW, btnH, 8);
+      btnGfx.lineStyle(2, 0x00ff00, 1);
+      btnGfx.strokeRoundedRect(btnX, btnY, btnW, btnH, 8);
+    });
+  }
+}
 
 // ==============================
 // MAIN SCENE
@@ -102,6 +160,10 @@ class GameScene extends Phaser.Scene {
       spawnSettler(this, shipX + (Math.random() - 0.5) * 4, shipY + (Math.random() - 0.5) * 4);
     }
 
+    // Center camera on the spaceship / colonists
+    const shipScreen = this.gridToScreen(shipX, shipY);
+    this.cameras.main.centerOn(shipScreen.screenX, shipScreen.screenY);
+
     this.time.addEvent({ delay: TICK_RATE, loop: true, callback: () => this.gameTick() });
     this.time.addEvent({ delay: POP_GROW_INTERVAL, loop: true, callback: () => { if (state.gameSpeed === 0) return; tryGrowPopulation(this); updateResourceUI(this); } });
 
@@ -187,6 +249,7 @@ class GameScene extends Phaser.Scene {
     redrawBuildings(this);
     updateResourceUI(this);
     updateInfoPanel(this);
+    updateTutorial(this);
   }
 
   triggerMeteorStorm() {
@@ -412,7 +475,7 @@ const config = {
   width: 800,
   height: 600,
   backgroundColor: "#2a2a2a",
-  scene: GameScene,
+  scene: [MenuScene, GameScene],
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
