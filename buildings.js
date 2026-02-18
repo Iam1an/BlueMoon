@@ -114,6 +114,26 @@ function checkAdjacency(b) {
 }
 
 // ==============================
+// CHECK PLACEMENT ADJACENCY
+// ==============================
+export function canPlaceAtPosition(x, y, type) {
+  const bt = BUILDING_TYPES[type];
+  if (!bt || !bt.requiresAdjacency) return true;
+  const neighbors = [
+    { x: x - 1, y: y },
+    { x: x + 1, y: y },
+    { x: x, y: y - 1 },
+    { x: x, y: y + 1 }
+  ];
+  for (const n of neighbors) {
+    if (n.x < 0 || n.x >= GRID_SIZE || n.y < 0 || n.y >= GRID_SIZE) continue;
+    const neighbor = state.grid[n.x][n.y];
+    if (neighbor && bt.requiresAdjacency.includes(neighbor.type)) return true;
+  }
+  return false;
+}
+
+// ==============================
 // PLACE BUILDING
 // ==============================
 export function placeBuilding(scene, x, y, type) {
@@ -121,6 +141,7 @@ export function placeBuilding(scene, x, y, type) {
   if (state.grid[x][y] !== null) return false;
   if (!canAfford(type)) return false;
   if (!isBuildingUnlocked(type)) return false;
+  if (!canPlaceAtPosition(x, y, type)) return false;
 
   const bt = BUILDING_TYPES[type];
   for (const [res, amount] of Object.entries(bt.cost)) {
@@ -165,11 +186,11 @@ export function demolishBuilding(scene, x, y) {
 
   if (building.type === "storage" && !building.constructing) {
     for (const key of STORAGE_RAW_KEYS) {
-      storageCap[key] = Math.max(storageCap[key] - 30, 40);
+      storageCap[key] = Math.max(storageCap[key] - 25, 30);
       resources[key] = Math.min(resources[key] || 0, storageCap[key]);
     }
     for (const key of STORAGE_COMPOUND_KEYS) {
-      storageCap[key] = Math.max(storageCap[key] - 25, 25);
+      storageCap[key] = Math.max(storageCap[key] - 15, 15);
       resources[key] = Math.min(resources[key] || 0, storageCap[key]);
     }
   }
@@ -297,8 +318,8 @@ export function processConstruction(scene) {
         b.constructing = false;
 
         if (b.type === "storage") {
-          for (const key of STORAGE_RAW_KEYS) storageCap[key] += 30;
-          for (const key of STORAGE_COMPOUND_KEYS) storageCap[key] += 25;
+          for (const key of STORAGE_RAW_KEYS) storageCap[key] += 25;
+          for (const key of STORAGE_COMPOUND_KEYS) storageCap[key] += 15;
         }
         if (b.type === "home") {
           state.populationCap += 2;
@@ -738,11 +759,11 @@ export function processMeteorStorm(scene) {
 
     if (b.type === "storage" && !b.constructing) {
       for (const key of STORAGE_RAW_KEYS) {
-        storageCap[key] = Math.max(storageCap[key] - 30, 40);
+        storageCap[key] = Math.max(storageCap[key] - 25, 30);
         resources[key] = Math.min(resources[key] || 0, storageCap[key]);
       }
       for (const key of STORAGE_COMPOUND_KEYS) {
-        storageCap[key] = Math.max(storageCap[key] - 25, 25);
+        storageCap[key] = Math.max(storageCap[key] - 15, 15);
         resources[key] = Math.min(resources[key] || 0, storageCap[key]);
       }
     }

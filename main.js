@@ -4,7 +4,7 @@ import {
   BUILDING_TYPES, BUILDING_KEYS,
   state
 } from "./state.js";
-import { canAfford, isBuildingUnlocked, drawIsoBox, placeBuilding, redrawBuildings, processConstruction, processProduction, spawnWreckage, processMeteorStorm } from "./buildings.js";
+import { canAfford, isBuildingUnlocked, drawIsoBox, placeBuilding, canPlaceAtPosition, redrawBuildings, processConstruction, processProduction, spawnWreckage, processMeteorStorm } from "./buildings.js";
 import { spawnSettler, updateSettler, assignSettlerToBuilding, findSettlerAt, autoAssignSettlers, tryGrowPopulation } from "./settlers.js";
 import { createUI, updateResourceUI, updateBuildingSelector, updateInfoPanel, rebuildSelector, rebuildSidePanel, updateTutorial } from "./ui.js";
 
@@ -399,7 +399,7 @@ class GameScene extends Phaser.Scene {
         hoverColor = 0x00aaff;
       } else if (occupied) {
         hoverColor = 0x00aaff;
-      } else if (canAfford(state.selectedType)) {
+      } else if (canAfford(state.selectedType) && canPlaceAtPosition(tile.x, tile.y, state.selectedType)) {
         hoverColor = 0x00ff00;
       } else {
         hoverColor = 0xff0000;
@@ -414,7 +414,7 @@ class GameScene extends Phaser.Scene {
       this.hoverGraphics.closePath();
       this.hoverGraphics.strokePath();
 
-      if (state.selectedType !== null && !occupied && canAfford(state.selectedType)) {
+      if (state.selectedType !== null && !occupied && canAfford(state.selectedType) && canPlaceAtPosition(tile.x, tile.y, state.selectedType)) {
         const bt = BUILDING_TYPES[state.selectedType];
         if (bt) drawIsoBox(this.hoverGraphics, screenX, screenY, bt.color, bt.height, 0.4);
       }

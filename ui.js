@@ -236,9 +236,11 @@ function buildSelector(scene) {
       const idx = availableKeys.indexOf(key) + 1;
       labelStr = `[${idx}] ${bt.name}`;
       const costs = Object.entries(bt.cost);
+      const ABBR = { shieldCrystal: "xtal", electronics: "elec", aluminum: "alum" };
+      const abbr = r => ABBR[r] || r.slice(0, 4);
       costStr = costs.length <= 2
         ? costs.map(([r, a]) => `${a} ${r}`).join(", ")
-        : costs.slice(0, 2).map(([r, a]) => `${a}${r.slice(0, 3)}`).join(",") + "...";
+        : costs.map(([r, a]) => `${a}${abbr(r)}`).join(" ");
     }
 
     const label = scene.add.text(bx + btnWidth / 2, by + 8, labelStr, {

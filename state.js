@@ -179,7 +179,7 @@ export const BUILDING_TYPES = {
     consumes: {},
     color: 0x4488ff,
     height: 14,
-    description: "Expands all storage caps",
+    description: "+25 raw material cap, +15 compound cap",
     requiresSettlers: false,
     requiresResearch: null
   },
@@ -200,10 +200,10 @@ export const BUILDING_TYPES = {
     key: "home",
     cost: { iron: 6, glass: 4, plastic: 2 },
     produces: {},
-    consumes: { power: 1 },
+    consumes: {},
     color: 0x44aa44,
     height: 12,
-    description: "+2 Pop, -1 Power",
+    description: "+2 Pop",
     requiresSettlers: false,
     requiresResearch: null
   },
@@ -300,10 +300,11 @@ export const BUILDING_TYPES = {
     consumes: {},
     color: 0x44cc44,
     height: 14,
-    description: "Stores 50 power, charges by day",
+    description: "Stores 50 power, charges by day. Must be placed adjacent to a Solar Panel.",
     requiresSettlers: false,
     requiresResearch: null,
-    batteryCapacity: 50
+    batteryCapacity: 50,
+    requiresAdjacency: ["solar"]
   },
   shieldGenerator: {
     name: "Shield Generator",
@@ -368,11 +369,11 @@ export const resources = {
 
 export const storageCap = {
   oxygen: 1000, food: 500, water: 500, fuel: 100,
-  iron: 40, copper: 40, sand: 40, aluminum: 40,
-  stone: 40, carbon: 40, sulfur: 40, silicon: 40,
-  shieldCrystal: 40,
-  diamond: 40, tungsten: 40,
-  steel: 25, glass: 25, plastic: 25, electronics: 25
+  iron: 30, copper: 30, sand: 30, aluminum: 30,
+  stone: 30, carbon: 30, sulfur: 30, silicon: 30,
+  shieldCrystal: 30,
+  diamond: 30, tungsten: 30,
+  steel: 15, glass: 15, plastic: 15, electronics: 15
 };
 
 export const state = {
