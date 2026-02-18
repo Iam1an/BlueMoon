@@ -11,15 +11,14 @@ import { unassignSettler, assignSettlerToBuilding } from "./settlers.js";
 // TUTORIAL STEPS
 // ==============================
 const TUTORIAL_STEPS = [
-  { message: "Welcome to Blue Moon! Your settlers have crash-landed. Let's get the colony started.", auto: true, delay: 180 },
-  { message: "Click on crash debris near the ship to salvage parts and free up space.", condition: (st) => st.buildings.some(b => b.type === "wreckage" && b.constructing) },
-  { message: "Settlers are salvaging the debris. Wait for them to finish.", condition: (st) => st.buildings.filter(b => b.type === "wreckage").length < 18 },
-  { message: "Nice! Now select a Solar Panel from the build menu and place it near the ship.", condition: (st) => st.buildings.some(b => b.type === "solar") },
-  { message: "Build a Greenhouse to grow food for your settlers. ", condition: (st) => st.buildings.some(b => b.type === "greenhouse") },
-  { message: "We are gonna need a second Solar Panel for the next building.", condition: (st) => st.buildings.filter(b => b.type === "solar").length >= 2 },
-  { message: "Build a Water Collector to supply your colony with water.", condition: (st) => st.buildings.some(b => b.type === "waterCollector") },
-  { message: "Remember that all buildings take energy to run!", condition: (st) => st.buildings.some(b => b.type === "waterCollector") },
-  { message: "A solar rain is coming... Get your colony ready.", auto: true, delay: 300 }
+  { message: "Welcome to Blue Moon! Your colony ship has crash-landed. Press [>] to unpause and begin.", auto: true, delay: 60 },
+  { message: "Select Solar Panel from the build menu and place it near the ship to start generating power.", condition: (st) => st.buildings.some(b => b.type === "solar") },
+  { message: "Good! Now click the crash debris around the ship to salvage it and recover resources.", condition: (st) => st.buildings.some(b => b.type === "wreckage" && b.constructing) },
+  { message: "Salvaging underway — your settlers are getting to work. Wait for them to finish.", condition: (st) => st.buildings.filter(b => b.type === "wreckage").length < 18 },
+  { message: "Resources recovered! Build a Greenhouse to grow food and keep your settlers fed.", condition: (st) => st.buildings.some(b => b.type === "greenhouse") },
+  { message: "Power demand rises as your colony grows. Build a second Solar Panel to keep up.", condition: (st) => st.buildings.filter(b => b.type === "solar").length >= 2 },
+  { message: "Build a Water Collector to supply your colony with fresh water.", condition: (st) => st.buildings.some(b => b.type === "waterCollector") },
+  { message: "A solar rain storm is approaching! Strengthen your colony and prepare for impact.", auto: true, delay: 300 }
 ];
 
 // ==============================
@@ -70,6 +69,7 @@ export function createUI(scene) {
     const speed = i; // 0=pause, 1=normal, 2=double
     z.on("pointerdown", () => {
       state.gameSpeed = speed;
+      state.tutorialPaused = false;
       updateSpeedButtons(scene);
     });
     scene.speedButtons.push({ gfx, txt, z, sx, sy, speed });
@@ -184,6 +184,7 @@ export function createUI(scene) {
   // Initialize first tutorial step timer and pause
   if (state.tutorialActive) {
     state.gameSpeed = 0;
+    state.tutorialPaused = true;
     const step = TUTORIAL_STEPS[state.tutorialStep];
     if (step && step.auto) {
       state.tutorialTimer = step.delay;
@@ -458,8 +459,9 @@ export function updateResourceUI(scene) {
   scene.stormText.setFill(stormColor);
 
   // Day/time display
-  const hours = Math.floor(state.dayTime * 24);
-  const mins = Math.floor((state.dayTime * 24 - hours) * 60);
+  const totalMins = Math.round(state.dayTime * 24 * 60);
+  const hours = Math.floor(totalMins / 60) % 24;
+  const mins = totalMins % 60;
   scene.dayText.setText(`Day ${state.dayCount}  ${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
 
   // Speed buttons + PAUSED
@@ -592,7 +594,9 @@ export function updateInfoPanel(scene) {
   // Helper: find nearest idle settler and assign manually
   function addWorkerAction(lineIdx, b) {
     actions.push({ lineIndex: lineIdx, cb: () => {
-      if (b.settlers.length >= MAX_SETTLERS_PER_BUILDING) return;
+      const bbt = BUILDING_TYPES[b.type];
+      const bcap = (bbt && bbt.maxWorkers) ? bbt.maxWorkers : MAX_SETTLERS_PER_BUILDING;
+      if (b.settlers.length >= bcap) return;
       const idle = state.settlers.filter(s => s.state === "idle" && !s.assignedBuilding);
       if (idle.length === 0) return;
       const nearest = idle.reduce((best, s) => {
@@ -699,10 +703,12 @@ export function updateInfoPanel(scene) {
       const workers = b.settlers.filter(s => s.state === "working").length;
       const activeResearch = state.research.active;
       const progressStr = activeResearch ? `${Math.floor(state.research.progress * 100)}%` : "None";
-      const canAdd = b.settlers.length < MAX_SETTLERS_PER_BUILDING;
+      const maxW = bt.maxWorkers || MAX_SETTLERS_PER_BUILDING;
+      const canAdd = b.settlers.length < maxW;
       const canRemove = b.settlers.length > 0;
+      const speedStr = workers === 0 ? "idle" : `${workers * 2}%/tick`;
 
-      lines = [bt.name, `Workers: ${workers}/${MAX_SETTLERS_PER_BUILDING}`,
+      lines = [bt.name, `Workers: ${workers}/${maxW} (${speedStr})`,
         "[+WORKER]", "[-WORKER]",
         `Researching: ${activeResearch ? TECH_TREE[activeResearch].name : "None"} ${progressStr}`, ""];
       colors = ["#9966cc", "#ffffff",
@@ -852,7 +858,7 @@ export function updateInfoPanel(scene) {
           lines = [bt.name, `Status: ${statusStr}`, solarLine, bt.description, settlerStr, "", "[DEMOLISH]"];
           colors = ["#4488ff", statusColor, "#ffdd00", "#cccccc", "#cccccc", "", "#ff4444"];
         } else if (b.type === "battery") {
-          const cap = bt.batteryCapacity || 50;
+          const cap = bt.batteryCapacity || 100;
           const charge = Math.floor(b.batteryCharge || 0);
           const pct = Math.round((charge / cap) * 100);
           lines = [bt.name, `Status: ${statusStr}`, `Charge: ${charge}/${cap} (${pct}%)`, bt.description, settlerStr, "", "[DEMOLISH]"];
@@ -883,8 +889,7 @@ export function updateInfoPanel(scene) {
     colors = ["#00dd00"];
 
     const stateNames = { idle: "Idle", walking: "Walk", building: "Build", working: "Work" };
-    const maxShow = Math.min(state.settlers.length, 12);
-    for (let i = 0; i < maxShow; i++) {
+    for (let i = 0; i < state.settlers.length; i++) {
       const s = state.settlers[i];
       const bName = s.assignedBuilding ? (BUILDING_TYPES[s.assignedBuilding.type]?.name || "Wreckage").slice(0, 10) : "---";
       lines.push(`#${s.id} ${stateNames[s.state] || s.state} ${bName}`);
@@ -895,11 +900,6 @@ export function updateInfoPanel(scene) {
         state.selectedBuilding = null;
         updateInfoPanel(scene);
       }});
-    }
-
-    if (state.settlers.length > 12) {
-      lines.push(`... +${state.settlers.length - 12} more`);
-      colors.push("#666666");
     }
   }
 
@@ -954,15 +954,19 @@ export function updateTutorial(scene) {
   }
 
   if (step.auto) {
-    state.tutorialTimer--;
+    // Only tick the timer when running normally, or when the tutorial itself caused the pause
+    if (state.gameSpeed !== 0 || state.tutorialPaused) {
+      state.tutorialTimer--;
+    }
     if (state.tutorialTimer <= 0) {
       state.tutorialStep++;
       const next = TUTORIAL_STEPS[state.tutorialStep];
       if (next && next.auto) {
         state.tutorialTimer = next.delay;
-      } else if (next && !next.auto && state.gameSpeed === 0) {
-        // Transitioning from auto step to action step — unpause once
+      } else if (next && !next.auto && state.tutorialPaused) {
+        // Tutorial itself paused the game — unpause now that action is needed
         state.gameSpeed = 1;
+        state.tutorialPaused = false;
       }
       return;
     }
@@ -971,8 +975,6 @@ export function updateTutorial(scene) {
     const next = TUTORIAL_STEPS[state.tutorialStep];
     if (next && next.auto) {
       state.tutorialTimer = next.delay;
-    } else if (next && !next.auto && state.gameSpeed === 0) {
-      state.gameSpeed = 1;
     }
     return;
   }

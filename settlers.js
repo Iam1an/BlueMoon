@@ -23,7 +23,9 @@ export function spawnSettler(scene, gx, gy) {
   };
 
   const { screenX, screenY } = scene.gridToScreen(gx, gy);
-  const rect = scene.add.rectangle(screenX, screenY - SETTLER_H / 2, 6, SETTLER_H, 0x00dd00);
+  const rect = scene.add.image(screenX, screenY, "settler");
+  rect.setOrigin(0.5, 1);   // anchor at bottom-center so feet sit on the tile
+  rect.setScale(0.5);
   rect.setDepth(2000 + screenY);
   rect.setInteractive();
   rect.settlerRef = s;
@@ -43,12 +45,12 @@ export function updateSettler(scene, s, dt) {
     // Still update visuals when paused, just don't move
     s.rect.setVisible(s.state !== "working");
     if (state.selectedSettler === s) {
-      s.rect.setStrokeStyle(2, 0xffffff);
+      s.rect.setTint(0xffff88);
     } else {
-      s.rect.setStrokeStyle();
+      s.rect.clearTint();
     }
     const { screenX, screenY } = scene.gridToScreen(s.gx, s.gy);
-    s.rect.setPosition(screenX, screenY - SETTLER_H / 2);
+    s.rect.setPosition(screenX, screenY);
     s.rect.setDepth(2000 + screenY);
     return;
   }
@@ -121,16 +123,16 @@ export function updateSettler(scene, s, dt) {
   // Hide settlers that are working inside a station
   s.rect.setVisible(s.state !== "working");
 
-  // Selection outline
+  // Selection tint
   if (state.selectedSettler === s) {
-    s.rect.setStrokeStyle(2, 0xffffff);
+    s.rect.setTint(0xffff88);
   } else {
-    s.rect.setStrokeStyle();
+    s.rect.clearTint();
   }
 
   // Update visual position
   const { screenX, screenY } = scene.gridToScreen(s.gx, s.gy);
-  s.rect.setPosition(screenX, screenY - SETTLER_H / 2);
+  s.rect.setPosition(screenX, screenY);
   s.rect.setDepth(2000 + screenY);
 }
 
@@ -143,7 +145,9 @@ export function assignSettlerToBuilding(settler, building, manual = false) {
 
   unassignSettler(settler);
 
-  if (building.settlers.length >= MAX_SETTLERS_PER_BUILDING) return false;
+  const bt = BUILDING_TYPES[building.type];
+  const cap = (bt && bt.maxWorkers) ? bt.maxWorkers : MAX_SETTLERS_PER_BUILDING;
+  if (building.settlers.length >= cap) return false;
 
   settler.assignedBuilding = building;
   building.settlers.push(settler);
@@ -184,7 +188,9 @@ export function autoAssignSettlers() {
     let bestDist = Infinity;
 
     for (const b of state.buildings) {
-      if (b.constructing && b.settlers.length < MAX_SETTLERS_PER_BUILDING) {
+      const bbt = BUILDING_TYPES[b.type];
+      const bcap = (bbt && bbt.maxWorkers) ? bbt.maxWorkers : MAX_SETTLERS_PER_BUILDING;
+      if (b.constructing && b.settlers.length < bcap) {
         const d = Math.abs(s.gx - b.x) + Math.abs(s.gy - b.y);
         if (d < bestDist) { bestDist = d; bestTarget = b; }
       }
@@ -219,7 +225,7 @@ export function findSettlerAt(scene, worldX, worldY) {
   for (const s of state.settlers) {
     const { screenX, screenY } = scene.gridToScreen(s.gx, s.gy);
     const dx = worldX - screenX;
-    const dy = worldY - (screenY - SETTLER_H / 2);
+    const dy = worldY - (screenY - 7);  // 7 = ~half the scaled sprite height (27*0.5/2)
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < closestDist) { closestDist = dist; closest = s; }
   }

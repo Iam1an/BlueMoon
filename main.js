@@ -80,6 +80,7 @@ class GameScene extends Phaser.Scene {
     this.load.image("solar2", "assets/Solar-Panel2.png");
     this.load.image("battery", "assets/battery.png");
     this.load.image("scrap", "assets/scrap-pile2.png");
+    this.load.image("settler", "assets/Settler.png");
     this.load.spritesheet("buildings", "assets/buildings_spritesheet.png", {
       frameWidth: 130,
       frameHeight: 200
@@ -217,8 +218,8 @@ class GameScene extends Phaser.Scene {
   }
 
   gameTick() {
-    if (state.gameSpeed === 0) return; // paused
     updateTutorial(this);
+    if (state.gameSpeed === 0) return; // paused
 
     const prevCompleted = [...state.research.completed];
 
@@ -428,6 +429,7 @@ class GameScene extends Phaser.Scene {
     this.input.keyboard.on("keydown", (event) => {
       if (event.key === " ") {
         state.gameSpeed = state.gameSpeed === 0 ? 1 : 0;
+        state.tutorialPaused = false;
         updateResourceUI(this);
         return;
       }

@@ -423,23 +423,21 @@ function processGreenhouse() {
 export function processResearch() {
   if (!state.research.active) return;
 
-  // Find an active research station with workers
-  let hasWorkers = false;
+  // Count total workers across all active research stations (cap 2 per station)
+  let totalWorkers = 0;
   for (const b of state.buildings) {
     if (b.type === "researchStation" && !b.constructing && b.active) {
       const workers = b.settlers.filter(s => s.state === "working").length;
-      if (workers > 0) {
-        hasWorkers = true;
-        break;
-      }
+      totalWorkers += Math.min(workers, 2);
     }
   }
-  if (!hasWorkers) return;
+  if (totalWorkers === 0) return;
 
   const tech = TECH_TREE[state.research.active];
   if (!tech) return;
 
-  state.research.progress += 1 / tech.time;
+  // 1 worker = 2% per tick, 2 workers = 4% per tick
+  state.research.progress += Math.min(totalWorkers, 2) * 0.02;
 
   if (state.research.progress >= 1) {
     state.research.progress = 1;
@@ -456,6 +454,13 @@ export function processResearch() {
     }
     if (tech.unlocks.crops) {
       state.unlockedCrops.push(...tech.unlocks.crops);
+    }
+
+    // Apply one-time effects
+    if (tech.effects) {
+      if (tech.effects.batteryCapacity !== undefined) {
+        BUILDING_TYPES.battery.batteryCapacity = tech.effects.batteryCapacity;
+      }
     }
 
     state.research.active = null;

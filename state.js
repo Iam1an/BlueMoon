@@ -20,8 +20,8 @@ export const FOOD_PER_SETTLER = 1;
 export const WATER_PER_SETTLER = 1;
 export const DEPLETION_INTERVAL = 5; // consume O2/food/water every N ticks
 
-export const DAY_LENGTH = 300;            // ticks per day (5 min at 1x, 10 min at 2x)
-export const STORM_INTERVAL = 2100;      // 7 days * 300 ticks
+export const DAY_LENGTH = 288;            // ticks per day (24h * 60min / 5min per tick = 288)
+export const STORM_INTERVAL = 2016;      // 7 days * 288 ticks
 export const STORM_WRECKAGE_MIN = 10;
 export const STORM_WRECKAGE_MAX = 15;
 export const SHIELD_RADIUS = 3;          // Manhattan distance
@@ -116,6 +116,14 @@ export const TECH_TREE = {
     time: 75,
     requires: ["seedResearch1"],
     unlocks: { crops: ["hydroponics", "oxygenGarden"] }
+  },
+  batteryUpgrade: {
+    name: "Battery Upgrade",
+    cost: { steel: 10, copper: 8, electronics: 4 },
+    time: 60,
+    requires: [],
+    unlocks: {},
+    effects: { batteryCapacity: 200 }
   }
 };
 
@@ -215,9 +223,10 @@ export const BUILDING_TYPES = {
     consumes: { power: 3 },
     color: 0x9966cc,
     height: 18,
-    description: "Unlocks new tech",
+    description: "Unlocks new tech. 1 worker=2%/tick, 2 workers=4%/tick",
     requiresSettlers: true,
-    requiresResearch: null
+    requiresResearch: null,
+    maxWorkers: 2
   },
   generator: {
     name: "Generator",
@@ -300,10 +309,10 @@ export const BUILDING_TYPES = {
     consumes: {},
     color: 0x44cc44,
     height: 14,
-    description: "Stores 50 power, charges by day. Must be placed adjacent to a Solar Panel.",
+    description: "Stores 100 power, charges by day. Must be placed adjacent to a Solar Panel.",
     requiresSettlers: false,
     requiresResearch: null,
-    batteryCapacity: 50,
+    batteryCapacity: 100,
     requiresAdjacency: ["solar"]
   },
   shieldGenerator: {
@@ -405,5 +414,6 @@ export const state = {
   // Tutorial
   tutorialActive: true,
   tutorialStep: 0,
-  tutorialTimer: 0
+  tutorialTimer: 0,
+  tutorialPaused: false  // true = tutorial itself paused the game (timer should still tick)
 };
