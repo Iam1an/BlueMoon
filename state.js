@@ -368,11 +368,11 @@ export const resources = {
 
 export const storageCap = {
   oxygen: 1000, food: 500, water: 500, fuel: 100,
-  iron: 100, copper: 100, sand: 100, aluminum: 100,
-  stone: 100, carbon: 100, sulfur: 100, silicon: 100,
-  shieldCrystal: 50,
-  diamond: 50, tungsten: 50,
-  steel: 50, glass: 50, plastic: 50, electronics: 50
+  iron: 40, copper: 40, sand: 40, aluminum: 40,
+  stone: 40, carbon: 40, sulfur: 40, silicon: 40,
+  shieldCrystal: 40,
+  diamond: 40, tungsten: 40,
+  steel: 25, glass: 25, plastic: 25, electronics: 25
 };
 
 export const state = {

@@ -217,6 +217,7 @@ class GameScene extends Phaser.Scene {
   }
 
   gameTick() {
+    updateTutorial(this);
     if (state.gameSpeed === 0) return; // paused
 
     for (let tick = 0; tick < state.gameSpeed; tick++) {
@@ -249,7 +250,6 @@ class GameScene extends Phaser.Scene {
     redrawBuildings(this);
     updateResourceUI(this);
     updateInfoPanel(this);
-    updateTutorial(this);
   }
 
   triggerMeteorStorm() {

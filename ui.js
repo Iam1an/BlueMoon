@@ -11,16 +11,15 @@ import { unassignSettler, assignSettlerToBuilding } from "./settlers.js";
 // TUTORIAL STEPS
 // ==============================
 const TUTORIAL_STEPS = [
-  { message: "Welcome to Blue Moon! Your settlers have crash-landed.", auto: true, delay: 180 },
-  { message: "Select a Solar Panel from the build menu at the bottom.", condition: (st) => st.selectedType === "solar" },
-  { message: "Place it on an empty tile near your ship.", condition: (st) => st.buildings.some(b => b.type === "solar" && b.constructing) },
-  { message: "Settlers will automatically build it. Wait for construction.", condition: (st) => st.buildings.some(b => b.type === "solar" && !b.constructing) },
-  { message: "Now build a Mining Drill to gather resources.", condition: (st) => st.selectedType === "miner" },
-  { message: "Place it on an empty tile.", condition: (st) => st.buildings.some(b => b.type === "miner") },
-  { message: "Click a building to see its info. Try clicking your Solar Panel.", condition: (st) => st.selectedBuilding?.type === "solar" },
-  { message: "Use [+WORKER] to manually assign settlers, or let them auto-assign.", auto: true, delay: 300 },
-  { message: "Build a Battery to store power for nighttime.", condition: (st) => st.buildings.some(b => b.type === "battery") },
-  { message: "You're ready! Explore the build menu for more buildings. Good luck!", auto: true, delay: 300 }
+  { message: "Welcome to Blue Moon! Your settlers have crash-landed. Let's get the colony started.", auto: true, delay: 180 },
+  { message: "Click on crash debris near the ship to salvage parts and free up space.", condition: (st) => st.buildings.some(b => b.type === "wreckage" && b.constructing) },
+  { message: "Settlers are salvaging the debris. Wait for them to finish.", condition: (st) => st.buildings.filter(b => b.type === "wreckage").length < 18 },
+  { message: "Nice! Now select a Solar Panel from the build menu and place it near the ship.", condition: (st) => st.buildings.some(b => b.type === "solar") },
+  { message: "Build a Greenhouse to grow food for your settlers. ", condition: (st) => st.buildings.some(b => b.type === "greenhouse") },
+  { message: "We are gonna need a second Solar Panel for the next building.", condition: (st) => st.buildings.filter(b => b.type === "solar").length >= 2 },
+  { message: "Build a Water Collector to supply your colony with water.", condition: (st) => st.buildings.some(b => b.type === "waterCollector") },
+  { message: "Remember that all buildings take energy to run!", condition: (st) => st.buildings.some(b => b.type === "waterCollector") },
+  { message: "A solar rain is coming... Get your colony ready.", auto: true, delay: 300 }
 ];
 
 // ==============================
@@ -210,7 +209,7 @@ function buildSelector(scene) {
   scene.selectorButtons = [];
 
   // Filter to unlocked buildings + cursor
-  const availableKeys = BUILDING_KEYS.filter(k => isBuildingUnlocked(k));
+  const availableKeys = BUILDING_KEYS.filter(k => k !== "spaceship" && k !== "wreckage" && isBuildingUnlocked(k));
   const allKeys = [null, ...availableKeys];
   const btnWidth = Math.min((W - 40) / allKeys.length, 120);
   const totalW = btnWidth * allKeys.length;
@@ -322,7 +321,7 @@ function showTooltip(scene, buildingKey, bx, by, btnWidth) {
   }
 
   // Position tooltip above button
-  const tipW = 180;
+  const tipW = 230;
   const tipH = 8 + tipLines.length * 13 + 4;
   let tipX = bx + btnWidth / 2 - tipW / 2;
   const tipY = by - tipH - 4;
@@ -413,7 +412,7 @@ function buildSidePanel(scene) {
 
   scene.sidePanelBg.clear();
   scene.sidePanelBg.fillStyle(0x000000, 0.65);
-  scene.sidePanelBg.fillRoundedRect(4, 48, 145, y - 44, 6);
+  scene.sidePanelBg.fillRoundedRect(4, 48, 168, y - 44, 6);
 
   scene.sidePanelBuilt = true;
 }
@@ -582,7 +581,7 @@ export function updateInfoPanel(scene) {
   // Return early only when in placement mode with nothing selected
   if (!state.selectedBuilding && !state.selectedSettler && state.selectedType !== null) return;
 
-  const px = W - 210;
+  const px = W - 254;
   const py = 52;
   let lines = [];
   let colors = [];
@@ -903,11 +902,12 @@ export function updateInfoPanel(scene) {
   }
 
   // Draw panel
+  const panelW = 244;
   const panelH = 10 + lines.length * 15 + 4;
   scene.infoBg.fillStyle(0x000000, 0.85);
-  scene.infoBg.fillRoundedRect(px, py, 200, panelH, 6);
+  scene.infoBg.fillRoundedRect(px, py, panelW, panelH, 6);
   scene.infoBg.lineStyle(1, 0x4488ff, 1);
-  scene.infoBg.strokeRoundedRect(px, py, 200, panelH, 6);
+  scene.infoBg.strokeRoundedRect(px, py, panelW, panelH, 6);
 
   for (let i = 0; i < lines.length && i < scene.infoTexts.length; i++) {
     if (!lines[i]) continue;
@@ -922,7 +922,7 @@ export function updateInfoPanel(scene) {
     const a = actions[i];
     const z = scene.actionZones[i];
     z.setPosition(px + 8, py + 6 + a.lineIndex * 15);
-    z.setSize(185, 14);
+    z.setSize(228, 14);
     z.setVisible(true);
     z.on("pointerdown", a.cb);
   }
@@ -973,23 +973,26 @@ export function updateTutorial(scene) {
 
   // Draw tutorial bar
   const W = scene.cameras.main.width;
-  const barW = Math.min(W - 40, 600);
+  const barW = Math.min(W - 40, 700);
   const barX = (W - barW) / 2;
+  const barH = 54;
+  const barY = 48;
 
   scene.tutorialBg.clear();
   scene.tutorialBg.fillStyle(0x000000, 0.8);
-  scene.tutorialBg.fillRoundedRect(barX, 48, barW, 30, 6);
+  scene.tutorialBg.fillRoundedRect(barX, barY, barW, barH, 6);
   scene.tutorialBg.lineStyle(1, 0x44aaff, 0.6);
-  scene.tutorialBg.strokeRoundedRect(barX, 48, barW, 30, 6);
+  scene.tutorialBg.strokeRoundedRect(barX, barY, barW, barH, 6);
 
+  scene.tutorialText.setWordWrapWidth(barW - 160);
   scene.tutorialText.setText(step.message);
-  scene.tutorialText.setPosition(W / 2, 53);
+  scene.tutorialText.setPosition(W / 2, barY + 10);
   scene.tutorialText.setVisible(true);
   scene.tutorialSkip.setVisible(true);
 
   // Show Next button on auto steps
   if (step.auto) {
-    scene.tutorialNext.setPosition(barX + barW - 8, 54);
+    scene.tutorialNext.setPosition(barX + barW - 8, barY + 18);
     scene.tutorialNext.setVisible(true);
   } else {
     scene.tutorialNext.setVisible(false);

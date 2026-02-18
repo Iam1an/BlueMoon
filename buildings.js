@@ -10,6 +10,9 @@ import {
 } from "./state.js";
 import { unassignSettler } from "./settlers.js";
 
+const STORAGE_RAW_KEYS = ["iron", "copper", "sand", "aluminum", "stone", "carbon", "sulfur", "silicon", "shieldCrystal", "diamond", "tungsten"];
+const STORAGE_COMPOUND_KEYS = ["steel", "glass", "plastic", "electronics"];
+
 // ==============================
 // DRAW ISOMETRIC BOX
 // ==============================
@@ -161,8 +164,12 @@ export function demolishBuilding(scene, x, y) {
   }
 
   if (building.type === "storage" && !building.constructing) {
-    for (const key of Object.keys(storageCap)) {
-      storageCap[key] = Math.max(storageCap[key] - 50, 50);
+    for (const key of STORAGE_RAW_KEYS) {
+      storageCap[key] = Math.max(storageCap[key] - 30, 40);
+      resources[key] = Math.min(resources[key] || 0, storageCap[key]);
+    }
+    for (const key of STORAGE_COMPOUND_KEYS) {
+      storageCap[key] = Math.max(storageCap[key] - 25, 25);
       resources[key] = Math.min(resources[key] || 0, storageCap[key]);
     }
   }
@@ -290,9 +297,8 @@ export function processConstruction(scene) {
         b.constructing = false;
 
         if (b.type === "storage") {
-          for (const key of Object.keys(storageCap)) {
-            storageCap[key] += 50;
-          }
+          for (const key of STORAGE_RAW_KEYS) storageCap[key] += 30;
+          for (const key of STORAGE_COMPOUND_KEYS) storageCap[key] += 25;
         }
         if (b.type === "home") {
           state.populationCap += 2;
@@ -731,8 +737,12 @@ export function processMeteorStorm(scene) {
     });
 
     if (b.type === "storage" && !b.constructing) {
-      for (const key of Object.keys(storageCap)) {
-        storageCap[key] = Math.max(storageCap[key] - 50, 50);
+      for (const key of STORAGE_RAW_KEYS) {
+        storageCap[key] = Math.max(storageCap[key] - 30, 40);
+        resources[key] = Math.min(resources[key] || 0, storageCap[key]);
+      }
+      for (const key of STORAGE_COMPOUND_KEYS) {
+        storageCap[key] = Math.max(storageCap[key] - 25, 25);
         resources[key] = Math.min(resources[key] || 0, storageCap[key]);
       }
     }
