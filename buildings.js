@@ -3,7 +3,7 @@ import {
   BUILDING_TYPES, BUILDING_FRAMES, BUILD_TIME_BASE, SALVAGE_TIME_BASE,
   STARTING_POP_CAP,
   OXYGEN_PER_SETTLER, FOOD_PER_SETTLER, WATER_PER_SETTLER,
-  DEPLETION_INTERVAL,
+  DEPLETION_INTERVAL, COLLECTION_CYCLE,
   SHIELD_RADIUS, STORM_INTERVAL, STORM_WRECKAGE_MIN, STORM_WRECKAGE_MAX,
   RECIPES, TECH_TREE, CROP_TYPES, WRECKAGE_LOOT,
   resources, storageCap, state
@@ -158,7 +158,8 @@ export function placeBuilding(scene, x, y, type) {
     settlers: [],
     activeRecipe: null, // for fabrication workshops
     selectedCrop: type === "greenhouse" ? "basicAlgae" : null,
-    batteryCharge: 0
+    batteryCharge: 0,
+    collectProgress: 0
   };
 
   state.grid[x][y] = building;
@@ -511,6 +512,7 @@ export function processProduction() {
     const manned = !bt.requiresSettlers || b.settlers.filter(s => s.state === "working").length > 0;
     const adjacent = checkAdjacency(b);
     b.active = manned && adjacent;
+    if (b.manuallyDisabled) b.active = false;
     b.notConnected = !adjacent && !!bt.requiresAdjacency;
   }
 

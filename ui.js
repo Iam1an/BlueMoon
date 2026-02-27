@@ -863,6 +863,17 @@ export function updateInfoPanel(scene) {
           const pct = Math.round((charge / cap) * 100);
           lines = [bt.name, `Status: ${statusStr}`, `Charge: ${charge}/${cap} (${pct}%)`, bt.description, settlerStr, "", "[DEMOLISH]"];
           colors = ["#4488ff", statusColor, "#44cc44", "#cccccc", "#cccccc", "", "#ff4444"];
+        } else if (b.type === "shieldGenerator") {
+          const shieldStatus = b.manuallyDisabled ? "DISABLED" : statusStr;
+          const shieldColor = b.manuallyDisabled ? "#888888" : statusColor;
+          const toggleLabel = b.manuallyDisabled ? "[ENABLE SHIELD]" : "[DISABLE SHIELD]";
+          const toggleColor = b.manuallyDisabled ? "#44ff44" : "#ffaa44";
+          lines = [bt.name, `Status: ${shieldStatus}`, bt.description, toggleLabel, "", "[DEMOLISH]"];
+          colors = ["#4488ff", shieldColor, "#cccccc", toggleColor, "", "#ff4444"];
+          actions.push({ lineIndex: 3, cb: () => {
+            b.manuallyDisabled = !b.manuallyDisabled;
+            updateInfoPanel(scene);
+          }});
         } else {
           lines = [bt.name, `Status: ${statusStr}`, bt.description, settlerStr, "", "[DEMOLISH]"];
           colors = ["#4488ff", statusColor, "#cccccc", "#cccccc", "", "#ff4444"];

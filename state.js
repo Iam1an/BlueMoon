@@ -19,9 +19,10 @@ export const OXYGEN_PER_SETTLER = 1;
 export const FOOD_PER_SETTLER = 1;
 export const WATER_PER_SETTLER = 1;
 export const DEPLETION_INTERVAL = 5; // consume O2/food/water every N ticks
+export const COLLECTION_CYCLE = 8;   // ticks per food/water collection cycle
 
 export const DAY_LENGTH = 288;            // ticks per day (24h * 60min / 5min per tick = 288)
-export const STORM_INTERVAL = 2016;      // 7 days * 288 ticks
+export const STORM_INTERVAL = 2880;      // 10 days * 288 ticks
 export const STORM_WRECKAGE_MIN = 10;
 export const STORM_WRECKAGE_MAX = 15;
 export const SHIELD_RADIUS = 3;          // Manhattan distance
@@ -400,7 +401,7 @@ export const state = {
   gameSpeed: 1,           // 0=paused, 1=normal, 2=double
   dayTime: 0.25,          // 0-1 cycle (0=midnight, 0.5=noon)
   dayCount: 1,
-  stormTimer: 1680,
+  stormTimer: 2880,
   stormActive: false,
   // Research
   research: {
